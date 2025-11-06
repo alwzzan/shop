@@ -212,28 +212,52 @@ function renderTable(){
   }
 }
 
-$('#printInvoice').onclick=()=>{
-  const b=$('#buyer').value.trim()||'—';
-  const g=toNum($('#grand').textContent);
-  const rows=sales.map(s=>`<tr><td>${s.type}</td><td>${s.price.toFixed(2)}</td><td>${s.weight.toFixed(2)}</td><td>${s.pay}</td><td>${s.total.toFixed(2)}</td></tr>`).join('');
-  const debtHtml = currentDebt>0 ? `<p>الدين السابق: <b>${currentDebt.toFixed(2)}</b></p><p>الإجمالي الجديد: <b>${(g+currentDebt).toFixed(2)}</b></p>` : '';
-  $('#invoiceContent').innerHTML = `
-    <h3>محلات أبو عبيدة لتجارة اللحوم</h3>
-    <div>هاتف: 07718329962</div>
-    <div>بإدارة أبو عبيدة</div>
-    <div>عبيدة مسؤول المخزن – 07733229624</div>
-    <hr>
-    <p>الزبون: <b>${b}</b></p>
-    <table style="width:100%;border-collapse:collapse" border="1" cellpadding="6">
-      <thead><tr><th>النوع </th><th>السعر/كغ</th><th>الوزن</th><th>الدفع</th><th>المجموع</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p>مجموع القائمة الحالية: <b>${g.toFixed(2)}</b></p>
-    ${debtHtml}
-  `;
-  document.body.classList.add('print-invoice');
-  const cleanup=()=>{document.body.classList.remove('print-invoice'); window.onafterprint=null;};
-  window.onafterprint=cleanup; window.print();
+$('#printInvoice').onclick = () => {
+  const b = $('#buyer').value.trim() || '—';
+  const g = toNum($('#grand').textContent);
+  const rows = sales.map(s =>
+    `<tr><td>${s.type}</td><td>${s.price.toFixed(2)}</td><td>${s.weight.toFixed(2)}</td><td>${s.pay}</td><td>${s.total.toFixed(2)}</td></tr>`
+  ).join('');
+  const debtHtml = currentDebt > 0
+    ? `<p>الدين السابق: <b>${currentDebt.toFixed(2)}</b></p><p>الإجمالي الجديد: <b>${(g + currentDebt).toFixed(2)}</b></p>`
+    : '';
+
+  // 👇 هذا الكود يفتح نافذة منفصلة للطباعة حتى لا تختفي في أندرويد
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>فاتورة</title>
+      <style>
+        body { font-family: 'Cairo', sans-serif; direction: rtl; padding: 15px; }
+        h3 { text-align: center; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        p { margin: 6px 0; }
+      </style>
+    </head>
+    <body>
+      <h3>محلات أبو عبيدة لتجارة اللحوم</h3>
+      <div>هاتف: 07718329962</div>
+      <div>بإدارة أبو عبيدة</div>
+      <div>عبيدة مسؤول المخزن – 07733229624</div>
+      <hr>
+      <p>الزبون: <b>${b}</b></p>
+      <table>
+        <thead><tr><th>نوع الصدر</th><th>السعر/كغ</th><th>الوزن</th><th>الدفع</th><th>المجموع</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p>مجموع القائمة الحالية: <b>${g.toFixed(2)}</b></p>
+      ${debtHtml}
+    </body></html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  }, 700);
 };
 </script>
 </body>

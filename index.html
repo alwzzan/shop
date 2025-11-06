@@ -213,52 +213,46 @@ function renderTable(){
   }
 }
 
-$('#printInvoice').onclick = () => {
+$('#printInvoice').onclick = async () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
   const b = $('#buyer').value.trim() || '—';
   const g = toNum($('#grand').textContent);
-  const rows = sales.map(s =>
-    `<tr><td>${s.type}</td><td>${s.price.toFixed(2)}</td><td>${s.weight.toFixed(2)}</td><td>${s.pay}</td><td>${s.total.toFixed(2)}</td></tr>`
-  ).join('');
-  const debtHtml = currentDebt > 0
-    ? `<p>الدين السابق: <b>${currentDebt.toFixed(2)}</b></p><p>الإجمالي الجديد: <b>${(g + currentDebt).toFixed(2)}</b></p>`
-    : '';
+  const rows = sales.map(
+    (s, i) =>
+      `${i + 1}. ${s.type}  |  ${s.price.toFixed(2)} /كغ  | ${s.weight.toFixed(
+        2
+      )} كغ | ${s.pay} | المجموع ${s.total.toFixed(2)}`
+  );
 
-  // 👇 هذا الكود يفتح نافذة منفصلة للطباعة حتى لا تختفي في أندرويد
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <html dir="rtl" lang="ar">
-    <head>
-      <meta charset="UTF-8">
-      <title>فاتورة</title>
-      <style>
-        body { font-family: 'Cairo', sans-serif; direction: rtl; padding: 15px; }
-        h3 { text-align: center; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
-        p { margin: 6px 0; }
-      </style>
-    </head>
-    <body>
-      <h3>محلات أبو عبيدة لتجارة اللحوم</h3>
-      <div>هاتف: 07718329962</div>
-      <div>بإدارة أبو عبيدة</div>
-      <div>عبيدة مسؤول المخزن – 07733229624</div>
-      <hr>
-      <p>الزبون: <b>${b}</b></p>
-      <table>
-        <thead><tr><th>نوع الصدر</th><th>السعر/كغ</th><th>الوزن</th><th>الدفع</th><th>المجموع</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <p>مجموع القائمة الحالية: <b>${g.toFixed(2)}</b></p>
-      ${debtHtml}
-    </body></html>
-  `);
-  printWindow.document.close();
-  setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  }, 700);
+  let y = 20;
+  doc.setFont('helvetica', 'bold');
+  doc.text('محلات أبو عبيدة لتجارة اللحوم', 105, y, { align: 'center' });
+  y += 10;
+  doc.setFont('helvetica', 'normal');
+  doc.text(`الزبون: ${b}`, 20, y);
+  y += 10;
+  rows.forEach((r) => {
+    doc.text(r, 20, y);
+    y += 8;
+  });
+  y += 10;
+  doc.text(`المجموع: ${g.toFixed(2)}`, 20, y);
+
+  if (currentDebt > 0) {
+    y += 10;
+    doc.text(`الدين السابق: ${currentDebt.toFixed(2)}`, 20, y);
+    y += 8;
+    doc.text(
+      `الإجمالي الجديد: ${(g + currentDebt).toFixed(2)}`,
+      20,
+      y
+    );
+  }
+
+  // 👇 يفتح ملف PDF في لسان جديد
+  doc.output('dataurlnewwindow');
 };
 </script>
 </body>

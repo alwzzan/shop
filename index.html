@@ -1,52 +1,33 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>محلات أبو عبيدة لتجارة اللحوم</title>
 <style>
-  @media print {
-  @page {
-    size: A4 portrait;      /* حجم الورقة */
-    margin: 5mm;            /* تقليل الهوامش */
-  }
-
-  body * {
-    visibility: hidden !important;
-  }
-
-  body.print-invoice #invoicePrint,
-  body.print-settle #settlePrint {
-    display: block !important;
-  }
-
-  body.print-invoice #invoicePrint *,
-  body.print-settle #settlePrint * {
-    visibility: visible !important;
-  }
-
-  /* تنسيق حجم الفاتورة لتملأ الصفحة */
-  #invoicePrint .receipt,
-  #settlePrint .receipt {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 15mm;          /* مسافة داخلية مناسبة */
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    transform: scale(1.3);  /* تكبير المحتوى */
-    transform-origin: top right;
-  }
-
-  table {
-    width: 100%;
-    font-size: 16px;
-  }
-}
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  body{margin:0;font-family:'Cairo';direction:rtl;background:#1e272e;color:#fff}
+  .wrap{max-width:900px;margin:20px auto;padding:16px;position:relative}
+  .card{background:#2d3436;border-radius:16px;padding:20px}
+  h1{color:#f6e58d;margin:0}
+  .sub{color:#f9ca24;font-size:14px}
+  input,button{font-family:'Cairo'}
+  input{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:1px solid #555;background:#444;color:#fff}
+  .btn{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;color:#fff;margin:4px}
+  .ok{background:#00b894}
+  .info{background:#0984e3}
+  fieldset{border:1px dashed #888;border-radius:8px;padding:8px;margin-top:8px}
+  .chip{padding:8px 12px;margin:4px;border-radius:20px;background:#555;cursor:pointer;display:inline-block}
+  .chip.active{background:#f6e58d;color:#000}
+  table{width:100%;border-collapse:collapse;margin-top:10px;background:#3a3a3a}
+  th,td{padding:8px;border-bottom:1px solid #555}
+  th{background:#444}
+  tfoot td{font-weight:bold;color:#f6e58d}
+  .menu-btn{position:absolute;top:10px;left:10px;font-size:28px;cursor:pointer;}
+  .modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.85);z-index:100}
+  .modal.open{display:grid}
+  .panel{background:#222;padding:20px;border-radius:12px;width:320px;text-align:center}
+  .panel input{background:#333}
 
   /* مناطق الطباعة المنفصلة */
   #invoicePrint, #settlePrint{display:none;color:#000}

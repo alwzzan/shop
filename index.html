@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>محلات أبو عبيدة لتجارة اللحوم</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  body{margin:0;font-family:'Cairo';direction:rtl;background:#1e272e;color:#fff}
+  .wrap{max-width:900px;margin:20px auto;padding:16px;position:relative}
+  .card{background:#2d3436;border-radius:16px;padding:20px}
+  h1{color:#f6e58d;margin:0}
+  .sub{color:#f9ca24;font-size:14px}
+  input,button{font-family:'Cairo'}
+  input{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:1px solid #555;background:#444;color:#fff}
+  .btn{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;color:#fff;margin:4px}
+  .ok{background:#00b894}
+  .info{background:#0984e3}
+  fieldset{border:1px dashed #888;border-radius:8px;padding:8px;margin-top:8px}
+  .chip{padding:8px 12px;margin:4px;border-radius:20px;background:#555;cursor:pointer;display:inline-block}
+  .chip.active{background:#f6e58d;color:#000}
+  table{width:100%;border-collapse:collapse;margin-top:10px;background:#3a3a3a}
+  th,td{padding:8px;border-bottom:1px solid #555}
+  th{background:#444}
+  tfoot td{font-weight:bold;color:#f6e58d}
+  .menu-btn{position:absolute;top:10px;left:10px;font-size:28px;cursor:pointer;}
+  .modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.85);z-index:100}
+  .modal.open{display:grid}
+  .panel{background:#222;padding:20px;border-radius:12px;width:320px;text-align:center}
+  .panel input{background:#333}
+
+  /* مناطق الطباعة المنفصلة */
+  #invoicePrint, #settlePrint{display:none;color:#000}
+  #invoicePrint .receipt, #settlePrint .receipt{border:2px dashed #000;padding:16px;border-radius:10px;background:#fff}
+  #invoicePrint h3, #settlePrint h3{margin:0 0 8px 0}
+
+  @media print{
+  body *{visibility:hidden !important}
+  body.print-invoice #invoicePrint, body.print-settle #settlePrint{display:block !important}
+  body.print-invoice #invoicePrint *, body.print-settle #settlePrint *{visibility:visible !important}
+
+  /* جعل الطباعة تبدأ من الأعلى واليمين */
+  #invoicePrint .receipt, #settlePrint .receipt{
+    margin:0 !important;
+    padding-top:0 !important;
+    position:absolute;
+    top:0;
+    right:0;
+    left:auto;
+    direction:rtl;
+    text-align:right;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="menu-btn" id="menuBtn">☰</div>
+  <div class="card">
+    <h1>محلات أبو عبيدة لتجارة اللحوم</h1>
+    
+    <div class="sub">بإدارة أبو عبيدة هاتف – 07718329962</div>
+    <div class="sub">عبيدة مسؤول المخزن – 07733229624</div>
+
+    <input type="text" id="buyer" placeholder="اسم المشتري">
+    <fieldset>
+      <legend>النوع </legend>
+      <div class="chip" data-value="صدر جلد">صدر جلد</div>
+      <div class="chip" data-value="صدر بدون جلد">صدر بدون جلد</div>
+    </fieldset>
+    <input type="number" id="price" step="0.01" placeholder="السعر للكيلو">
+    <input type="number" id="weight" step="0.01" placeholder="الوزن بالكيلو">
+    <fieldset>
+      <legend>طريقة الدفع</legend>
+      <div class="chip" data-value="نقدًا">نقدًا</div>
+      <div class="chip" data-value="دين">دين</div>
+    </fieldset>
+    <button class="btn ok" id="add">إضافة</button>
+    <button class="btn info" id="printInvoice">طباعة</button>
+
+    <table id="tbl">
+      <thead>
+        <tr><th>المشتري</th><th>النوع</th><th>السعر/كغ</th><th>الوزن</th><th>المجموع</th><th>الدفع</th></tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr><td colspan="4">مجموع القائمة الحالية</td><td id="grand">0.00</td><td></td></tr>
+        <tr id="prevDebtRow" style="display:none"><td colspan="4">الدين السابق</td><td id="prevDebt">0.00</td><td></td></tr>
+        <tr id="totalWithDebtRow" style="display:none"><td colspan="4">الإجمالي الجديد</td><td id="totalWithDebt">0.00</td><td></td></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- نافذة الدين السابق -->
+<div class="modal" id="debtModal">
+  <div class="panel">
+    <h3>إدخال الدين السابق</h3>
+    <input type="number" id="prevDebtInput" step="0.01" placeholder="أدخل مبلغ الدين السابق">
+    <button class="btn ok" id="saveDebt">حفظ</button>
+  </div>
+</div>
+
+<!-- نافذة التسديد (من الثلاث شخوط) -->
+<div class="modal" id="menuModal">
+  <div class="panel">
+    <h3>تسديد</h3>
+    <input type="text" id="buyerName" placeholder="اسم المشتري" />
+    <input type="number" id="totalAmount" step="0.01" placeholder="المبلغ الكلي" />
+    <input type="number" id="paymentAmount" step="0.01" placeholder="مبلغ التسديد" />
+    <div style="margin-top:10px">
+      <button class="btn ok" id="saveBtn">حفظ</button>
+      <button class="btn info" id="printBtn">طباعة</button>
+    </div>
+  </div>
+</div>
+
+<!-- منطقة طباعة الفاتورة فقط -->
+<div id="invoicePrint">
+  <div class="receipt">
+    <div id="invoiceContent"></div>
+  </div>
+</div>
+
+<!-- منطقة طباعة التسديد فقط -->
+<div id="settlePrint">
+  <div class="receipt">
+    <div id="settleContent"></div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);const $$=s=>Array.from(document.querySelectorAll(s));
+const toNum=v=>parseFloat(v||0);
+let sales=[],currentDebt=0,lastData={};
+
+// قائمة ثلاث شخوط
+$('#menuBtn').onclick=()=>$('#menuModal').classList.add('open');
+$('#saveBtn').onclick=()=>{
+  const name=$('#buyerName').value.trim();
+  const total=toNum($('#totalAmount').value);
+  const pay=toNum($('#paymentAmount').value);
+  if(!name||!total||!pay){alert('أكمل الحقول');return;}
+  const remain=(total-pay).toFixed(2);
+  lastData={buyer:name,total:total.toFixed(2),pay:pay.toFixed(2),remain};
+  localStorage.setItem('lastPayment',JSON.stringify(lastData));
+  alert('تم الحفظ');
+  $('#menuModal').classList.remove('open');
+};
+$('#printBtn').onclick=()=>{
+  const data=JSON.parse(localStorage.getItem('lastPayment'))||lastData;
+  if(!data.buyer){alert('لا توجد بيانات للطباعة');return;}
+  $('#menuModal').classList.remove('open');
+  $('#settleContent').innerHTML = `
+    <h3>محلات أبو عبيدة لتجارة اللحوم</h3>
+    <hr>
+    <p>اسم المشتري: <b>${data.buyer}</b></p>
+    <p>المبلغ قبل التسديد: <b>${data.total}</b></p>
+    <p>مبلغ التسديد: <b>${data.pay}</b></p>
+    <p>الباقي  : <b>${data.remain}</b></p>
+  `;
+  document.body.classList.add('print-settle');
+  const cleanup=()=>{document.body.classList.remove('print-settle'); window.onafterprint=null;};
+  window.onafterprint=cleanup; window.print();
+};
+
+function chipGroup(sel){const box=$(sel);let val='';box.addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  $$('fieldset .chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active');val=c.dataset.value;
+  if(val==='دين') $('#debtModal').classList.add('open');
+});return{get:()=>val}};
+const typeSel=chipGroup('fieldset:nth-of-type(1)');
+const paySel=chipGroup('fieldset:nth-of-type(2)');
+
+$('#saveDebt').onclick=()=>{
+  currentDebt=toNum($('#prevDebtInput').value);
+  $('#debtModal').classList.remove('open');
+  renderTable();
+};
+
+$('#add').onclick=()=>{
+  const b=$('#buyer').value.trim();
+  const t=typeSel.get();
+  const p=toNum($('#price').value);
+  const w=toNum($('#weight').value);
+  const pay=paySel.get();
+  if(!b||!t||!p||!w||!pay){alert('أكمل الحقول');return;}
+  const total=p*w;
+  sales.push({buyer:b,type:t,price:p,weight:w,total,pay});
+  renderTable();
+};
+
+function renderTable(){
+  const body=$('#tbl tbody');body.innerHTML='';
+  let grand=0;
+  sales.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${s.buyer}</td><td>${s.type}</td><td>${s.price.toFixed(2)}</td><td>${s.weight.toFixed(2)}</td><td>${s.total.toFixed(2)}</td><td>${s.pay}</td>`;
+    body.appendChild(tr); grand+=s.total;
+  });
+  $('#grand').textContent=grand.toFixed(2);
+  if(currentDebt>0){
+    $('#prevDebtRow').style.display='table-row';
+    $('#totalWithDebtRow').style.display='table-row';
+    $('#prevDebt').textContent=currentDebt.toFixed(2);
+    $('#totalWithDebt').textContent=(grand+currentDebt).toFixed(2);
+  }else{
+    $('#prevDebtRow').style.display='none';
+    $('#totalWithDebtRow').style.display='none';
+  }
+}
+
+$('#printInvoice').onclick=()=>{
+  const b=$('#buyer').value.trim()||'—';
+  const g=toNum($('#grand').textContent);
+  const rows=sales.map(s=>`<tr><td>${s.type}</td><td>${s.price.toFixed(2)}</td><td>${s.weight.toFixed(2)}</td><td>${s.pay}</td><td>${s.total.toFixed(2)}</td></tr>`).join('');
+  const debtHtml = currentDebt>0 ? `<p>الدين السابق: <b>${currentDebt.toFixed(2)}</b></p><p>الإجمالي الجديد: <b>${(g+currentDebt).toFixed(2)}</b></p>` : '';
+  $('#invoiceContent').innerHTML = `
+    <h3>محلات أبو عبيدة لتجارة اللحوم</h3>
+    <div>هاتف: 07718329962</div>
+    <div>بإدارة أبو عبيدة</div>
+    <div>عبيدة مسؤول المخزن – 07733229624</div>
+    <hr>
+    <p>الزبون: <b>${b}</b></p>
+    <table style="width:100%;border-collapse:collapse" border="1" cellpadding="6">
+      <thead><tr><th>النوع </th><th>السعر/كغ</th><th>الوزن</th><th>الدفع</th><th>المجموع</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p>مجموع القائمة الحالية: <b>${g.toFixed(2)}</b></p>
+    ${debtHtml}
+  `;
+  document.body.classList.add('print-invoice');
+  const cleanup=()=>{document.body.classList.remove('print-invoice'); window.onafterprint=null;};
+  window.onafterprint=cleanup; window.print();
+};
+</script>
+</body>
+</html>
